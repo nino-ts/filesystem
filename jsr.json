@@ -1,0 +1,19 @@
+{
+    "name": "@ninots/filesystem",
+    "version": "0.0.1",
+    "exports": "./index.ts",
+    "publish": {
+        "include": [
+            "src/**/*.ts",
+            "index.ts",
+            "README.md",
+            "package.json",
+            "jsr.json"
+        ],
+        "exclude": [
+            "tests/**",
+            "dist/**",
+            "node_modules/**"
+        ]
+    }
+}
