@@ -3,13 +3,8 @@ preload = ["./tests/setup.ts"]
 coverage = true
 coverageThreshold = { line = 80, function = 80, branch = 70 }
 
-# Sprint 14 — Bun-only publish config (see bun.com/docs/runtime/bunfig)
-# Auth: Bun reads ~/.npmrc and NPM_CONFIG_TOKEN / BUN_CONFIG_TOKEN.
-# Do not commit secrets; token via env var reference only.
-
 [install]
 registry = "https://registry.npmjs.org"
 
 [install.scopes]
-# Scoped @ninots publish/install; token from env (CI: NPM_CONFIG_TOKEN)
-ninots = { token = "$NPM_CONFIG_TOKEN", url = "https://registry.npmjs.org/" }
+"@ninots" = { token = "$NPM_CONFIG_TOKEN", url = "https://registry.npmjs.org/" }

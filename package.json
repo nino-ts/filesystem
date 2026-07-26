@@ -22,13 +22,25 @@
     },
     "types": "./dist/index.d.ts",
     "files": [
+        "LICENSE",
+        "README.md",
         "dist",
-        "src",
-        "index.ts"
+        "dist/index.d.ts",
+        "index.ts",
+        "jsr.json",
+        "src"
     ],
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
-    "license": "MIT"
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nino-ts/filesystem.git"
+    },
+    "bugs": {
+        "url": "https://github.com/nino-ts/filesystem/issues"
+    },
+    "homepage": "https://github.com/nino-ts/filesystem#readme"
 }

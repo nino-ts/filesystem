@@ -1,0 +1,27 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Tests / coverage
+tests/
+*.test.ts
+*.spec.ts
+coverage/
+fixtures/
+mocks/
+
+# Dev / CI
+.github/
+.vscode/
+.idea/
+.env*
+!.env.example
+biome.json
+tsconfig.tsbuildinfo
+node_modules/
+.DS_Store
+docs/
+*.md
+!README.md
+!LICENSE

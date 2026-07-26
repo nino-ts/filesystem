@@ -1,0 +1,33 @@
+name: Publish package on registry
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+      - name: Publish to npm
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NPM_CONFIG_TOKEN}" ]; then
+            echo "NPM_TOKEN unset — skip bun publish (configure secret or use OIDC later)"
+            exit 1
+          fi
+          printf '%s\n' "//registry.npmjs.org/:_authToken=${NPM_CONFIG_TOKEN}" >> "${HOME}/.npmrc"
+          bun publish --access public --tolerate-republish
+      - name: Publish to JSR
+        run: bunx --bun jsr publish --allow-slow-types --allow-dirty

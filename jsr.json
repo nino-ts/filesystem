@@ -8,7 +8,8 @@
             "index.ts",
             "README.md",
             "package.json",
-            "jsr.json"
+            "jsr.json",
+            "LICENSE"
         ],
         "exclude": [
             "tests/**",
