@@ -3,21 +3,57 @@
     "main": "index.ts",
     "module": "index.ts",
     "type": "module",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "File system operations and storage abstraction for Bun",
     "author": "Ninots Framework",
-    "keywords": ["bun","filesystem","storage","file","typescript"],
+    "keywords": [
+        "bun",
+        "filesystem",
+        "storage",
+        "file",
+        "typescript"
+    ],
     "license": "MIT",
-    "scripts": { "test": "bun test" },
-    "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org" },
-    "repository": { "type": "git", "url": "https://github.com/nino-ts/filesystem.git" },
-    "bugs": { "url": "https://github.com/nino-ts/filesystem/issues" },
+    "scripts": {
+        "test": "bun test"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nino-ts/filesystem.git"
+    },
+    "bugs": {
+        "url": "https://github.com/nino-ts/filesystem/issues"
+    },
     "homepage": "https://github.com/nino-ts/filesystem#readme",
-    "devDependencies": { "@types/bun": "latest" },
-    "peerDependencies": { "typescript": "^6.0.3" },
-    "exports": { ".": { "types": "./dist/index.d.ts", "import": "./index.ts", "default": "./index.ts" } },
-    "types": "./dist/index.d.ts",
-    "files": ["LICENSE", "README.md", "dist", "dist/index.d.ts", "index.ts", "jsr.json", "src"],
-    "engines": { "bun": ">=1.0.0" },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^6.0.3"
+    },
+    "exports": {
+        ".": {
+            "types": "./index.ts",
+            "import": "./index.ts",
+            "default": "./index.ts"
+        }
+    },
+    "types": "./index.ts",
+    "files": [
+        "LICENSE",
+        "README.md",
+        "dist",
+        "dist/index.d.ts",
+        "index.ts",
+        "jsr.json",
+        "src"
+    ],
+    "engines": {
+        "bun": ">=1.0.0"
+    },
     "packageManager": "~bun@1.0.0"
 }
