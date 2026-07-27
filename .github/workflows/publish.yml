@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  # Required for npm Trusted Publishing (OIDC) — no registry secrets.
   id-token: write
   packages: write
 
@@ -15,19 +16,25 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: "latest"
+
+      # CI-only: enables npm Trusted Publishing / OIDC.
+      # Product support matrix remains Bun-only; this does not reintroduce Node as a runtime.
+      - name: Set up Node (npm OIDC helper)
+        uses: actions/setup-node@v6
+        with:
+          node-version: "lts/*"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@ninots"
+
       - name: Publish to npm
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "${NPM_CONFIG_TOKEN}" ]; then
-            echo "NPM_TOKEN unset — skip bun publish (configure secret or use OIDC later)"
-            exit 1
-          fi
-          printf '%s\n' "//registry.npmjs.org/:_authToken=${NPM_CONFIG_TOKEN}" >> "${HOME}/.npmrc"
-          bun publish --access public --tolerate-republish
+        run: npm publish --access public --provenance
+
       - name: Publish to JSR
         run: bunx --bun jsr publish --allow-slow-types --allow-dirty
