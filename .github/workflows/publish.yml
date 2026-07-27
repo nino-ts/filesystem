@@ -50,5 +50,9 @@ jobs:
         with:
           bun-version: "latest"
 
+      # Needed when package has npm deps (e.g. config → yaml) for JSR type graph.
+      - name: Install dependencies
+        run: bun install
+
       - name: Publish to JSR
         run: bunx --bun jsr publish --allow-slow-types --allow-dirty
