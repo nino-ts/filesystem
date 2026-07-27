@@ -1,22 +1,22 @@
 {
-    "$schema": "https://jsr.io/schema/config-file.v1.json",
-    "name": "@ninots/filesystem",
-    "version": "0.0.2",
-    "exports": "./index.ts",
-    "publish": {
-        "include": [
-            "src/**/*.ts",
-            "index.ts",
-            "README.md",
-            "package.json",
-            "jsr.json",
-            "LICENSE"
-        ],
-        "exclude": [
-            "tests/**",
-            "dist/**",
-            "node_modules/**"
-        ]
-    },
-    "license": "MIT"
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
+  "name": "@ninots/filesystem",
+  "version": "0.1.0",
+  "exports": "./index.ts",
+  "publish": {
+    "include": [
+      "src/**/*.ts",
+      "index.ts",
+      "README.md",
+      "package.json",
+      "jsr.json",
+      "LICENSE"
+    ],
+    "exclude": [
+      "tests/**",
+      "dist/**",
+      "node_modules/**"
+    ]
+  },
+  "license": "MIT"
 }
