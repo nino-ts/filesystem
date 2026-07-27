@@ -1,10 +1,15 @@
+# Bun Configuration for Ninots Framework
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+linker = "hoisted"
+linkWorkspacePackages = true
+
+[install.scopes]
+"@ninots" = { token = "$NPM_CONFIG_TOKEN", url = "https://registry.npmjs.org/" }
+
 [test]
 preload = ["./tests/setup.ts"]
 coverage = true
 coverageThreshold = { line = 80, function = 80, branch = 70 }
-
-[install]
-registry = "https://registry.npmjs.org"
-
-[install.scopes]
-"@ninots" = { token = "$NPM_CONFIG_TOKEN", url = "https://registry.npmjs.org/" }
+coverageReporter = ["lcov"]
