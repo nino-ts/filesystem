@@ -28,7 +28,7 @@ export interface CronJob {
 /**
  * Filesystem scheduler for automated tasks.
  *
- * Uses Bun's native Cron API for scheduling filesystem operations.
+ * Uses Bun's native {@link Bun.cron} API for scheduling filesystem operations.
  *
  * @example
  * ```typescript
@@ -75,52 +75,9 @@ export class FilesystemScheduler {
         },
     ): CronJob {
         const jobId = `cleanup_${pattern.replace(/[^a-z0-9]/gi, "_")}`;
-
-        const job: CronJob = {
-            isRunning: () => {
-                const job = this.jobs.get(jobId);
-                return job?.isRunning() ?? false;
-            },
-            start: () => {
-                // Bun.Cron is available in Bun 1.3.11+
-                if (typeof Bun.Cron !== "undefined") {
-                    const cron = new Bun.Cron(cronExpression, async () => {
-                        await this.cleanup(pattern, options);
-                    });
-                    cron.start();
-                    this.jobs.set(jobId, {
-                        isRunning: () => true,
-                        start: () => cron.start(),
-                        stop: () => cron.stop(),
-                    });
-                } else {
-                    // Fallback to setInterval for older Bun versions
-                    const interval = this.cronToInterval(cronExpression);
-                    if (interval) {
-                        const timerId = setInterval(async () => {
-                            await this.cleanup(pattern, options);
-                        }, interval);
-                        this.jobs.set(jobId, {
-                            isRunning: () => true,
-                            start: () => {}, // Already running
-                            stop: () => clearInterval(timerId),
-                        });
-                    }
-                }
-            },
-            stop: () => {
-                const job = this.jobs.get(jobId);
-                if (job) {
-                    job.stop();
-                    this.jobs.delete(jobId);
-                }
-            },
-        };
-
-        // Start the job
-        job.start();
-
-        return job;
+        return this.registerJob(jobId, cronExpression, async () => {
+            await this.cleanup(pattern, options);
+        });
     }
 
     /**
@@ -133,49 +90,9 @@ export class FilesystemScheduler {
      */
     scheduleBackup(source: string, destination: string, cronExpression: string): CronJob {
         const jobId = `backup_${source.replace(/[^a-z0-9]/gi, "_")}`;
-
-        const job: CronJob = {
-            isRunning: () => {
-                const job = this.jobs.get(jobId);
-                return job?.isRunning() ?? false;
-            },
-            start: () => {
-                if (typeof Bun.Cron !== "undefined") {
-                    const cron = new Bun.Cron(cronExpression, async () => {
-                        await this.backup(source, destination);
-                    });
-                    cron.start();
-                    this.jobs.set(jobId, {
-                        isRunning: () => true,
-                        start: () => cron.start(),
-                        stop: () => cron.stop(),
-                    });
-                } else {
-                    const interval = this.cronToInterval(cronExpression);
-                    if (interval) {
-                        const timerId = setInterval(async () => {
-                            await this.backup(source, destination);
-                        }, interval);
-                        this.jobs.set(jobId, {
-                            isRunning: () => true,
-                            start: () => {},
-                            stop: () => clearInterval(timerId),
-                        });
-                    }
-                }
-            },
-            stop: () => {
-                const job = this.jobs.get(jobId);
-                if (job) {
-                    job.stop();
-                    this.jobs.delete(jobId);
-                }
-            },
-        };
-
-        job.start();
-
-        return job;
+        return this.registerJob(jobId, cronExpression, async () => {
+            await this.backup(source, destination);
+        });
     }
 
     /**
@@ -187,44 +104,7 @@ export class FilesystemScheduler {
      * @returns Cron job handle
      */
     schedule(jobId: string, cronExpression: string, callback: CronJobCallback): CronJob {
-        const job: CronJob = {
-            isRunning: () => {
-                const job = this.jobs.get(jobId);
-                return job?.isRunning() ?? false;
-            },
-            start: () => {
-                if (typeof Bun.Cron !== "undefined") {
-                    const cron = new Bun.Cron(cronExpression, callback);
-                    cron.start();
-                    this.jobs.set(jobId, {
-                        isRunning: () => true,
-                        start: () => cron.start(),
-                        stop: () => cron.stop(),
-                    });
-                } else {
-                    const interval = this.cronToInterval(cronExpression);
-                    if (interval) {
-                        const timerId = setInterval(callback, interval);
-                        this.jobs.set(jobId, {
-                            isRunning: () => true,
-                            start: () => {},
-                            stop: () => clearInterval(timerId),
-                        });
-                    }
-                }
-            },
-            stop: () => {
-                const job = this.jobs.get(jobId);
-                if (job) {
-                    job.stop();
-                    this.jobs.delete(jobId);
-                }
-            },
-        };
-
-        job.start();
-
-        return job;
+        return this.registerJob(jobId, cronExpression, callback);
     }
 
     /**
@@ -242,6 +122,48 @@ export class FilesystemScheduler {
      */
     getJobCount(): number {
         return this.jobs.size;
+    }
+
+    private registerJob(jobId: string, cronExpression: string, callback: CronJobCallback): CronJob {
+        let running = false;
+        let bunJob: import("bun").CronJob | null = null;
+        let timerId: ReturnType<typeof setInterval> | null = null;
+
+        const job: CronJob = {
+            isRunning: () => running,
+            start: () => {
+                if (running) {
+                    return;
+                }
+
+                if (typeof Bun.cron === "function") {
+                    bunJob = Bun.cron(cronExpression, callback);
+                    running = true;
+                    this.jobs.set(jobId, job);
+                    return;
+                }
+
+                const interval = this.cronToInterval(cronExpression);
+                if (interval) {
+                    timerId = setInterval(callback, interval);
+                    running = true;
+                    this.jobs.set(jobId, job);
+                }
+            },
+            stop: () => {
+                bunJob?.stop();
+                bunJob = null;
+                if (timerId !== null) {
+                    clearInterval(timerId);
+                    timerId = null;
+                }
+                running = false;
+                this.jobs.delete(jobId);
+            },
+        };
+
+        job.start();
+        return job;
     }
 
     /**
@@ -292,17 +214,12 @@ export class FilesystemScheduler {
      */
     private async backup(source: string, destination: string): Promise<void> {
         try {
-            // Import ArchiveUtils dynamically to avoid circular dependency
             const { ArchiveUtils } = await import("./archive");
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
             const backupPath = `${destination}_${timestamp}.tar`;
 
-            const success = await ArchiveUtils.createFromDirectory(backupPath, source, this.adapter);
-
-            if (success) {
-            } else {
-            }
+            await ArchiveUtils.createFromDirectory(backupPath, source, this.adapter);
         } catch (_error) {}
     }
 
@@ -310,14 +227,13 @@ export class FilesystemScheduler {
      * Check if a path matches a glob pattern.
      */
     private matchesPattern(path: string, pattern: string): boolean {
-        // Simple glob pattern matching
         const regex = new RegExp(`^${pattern.replace(/\./g, "\\.").replace(/\*/g, ".*").replace(/\?/g, ".")}$`);
         return regex.test(path);
     }
 
     /**
      * Convert cron expression to interval in milliseconds.
-     * Supports basic expressions only.
+     * Supports basic expressions only (fallback when Bun.cron is unavailable).
      */
     private cronToInterval(cronExpression: string): number | null {
         const parts = cronExpression.split(" ");
@@ -327,22 +243,18 @@ export class FilesystemScheduler {
 
         const [minute, hour, day, month, weekday] = parts;
 
-        // Every minute
         if (minute === "*" && hour === "*" && day === "*" && month === "*" && weekday === "*") {
             return 60000;
         }
 
-        // Every hour
         if (minute === "0" && hour === "*" && day === "*" && month === "*" && weekday === "*") {
             return 3600000;
         }
 
-        // Every day at specific hour
         if (minute !== "*" && hour !== "*" && day === "*" && month === "*" && weekday === "*") {
             return 86400000;
         }
 
-        // Default: don't schedule complex expressions
         return null;
     }
 }

@@ -3,7 +3,7 @@
   "main": "index.ts",
   "module": "index.ts",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "File system operations and storage abstraction for Bun",
   "author": "Ninots Framework",
   "keywords": [

@@ -3,11 +3,22 @@ import type { FilesystemDisk } from "../contracts/filesystem";
 /**
  * Archive utilities for creating and extracting tar archives.
  *
- * Uses Bun's native Archive API for fast tar operations.
+ * Uses Bun's native {@link Bun.Archive} API for fast tar operations.
  */
 export async function create(outputPath: string, paths: string[]): Promise<boolean> {
     try {
-        await Bun.Archive.create(outputPath, paths);
+        const entries: Record<string, string | Uint8Array> = {};
+
+        for (const filePath of paths) {
+            const file = Bun.file(filePath);
+            if (!(await file.exists())) {
+                continue;
+            }
+            entries[filePath] = new Uint8Array(await file.arrayBuffer());
+        }
+
+        const archive = new Bun.Archive(entries);
+        await Bun.write(outputPath, archive);
         return true;
     } catch (_error) {
         return false;
@@ -23,7 +34,9 @@ export async function create(outputPath: string, paths: string[]): Promise<boole
  */
 export async function extract(archivePath: string, destination: string): Promise<boolean> {
     try {
-        await Bun.Archive.extract(archivePath, destination);
+        const tarball = await Bun.file(archivePath).bytes();
+        const archive = new Bun.Archive(tarball);
+        await archive.extract(destination);
         return true;
     } catch (_error) {
         return false;
@@ -45,7 +58,18 @@ export async function createFromDirectory(
 ): Promise<boolean> {
     try {
         const files = await adapter.allFiles(directory);
-        return await create(outputPath, files);
+        const entries: Record<string, string> = {};
+
+        for (const filePath of files) {
+            const content = await adapter.get(filePath);
+            if (content !== null) {
+                entries[filePath] = content;
+            }
+        }
+
+        const archive = new Bun.Archive(entries);
+        await Bun.write(outputPath, archive);
+        return true;
     } catch (_error) {
         return false;
     }
@@ -81,19 +105,17 @@ export async function extractToDirectory(
  */
 export async function createBlob(paths: string[], adapter: FilesystemDisk): Promise<Blob | null> {
     try {
-        const tempPath = `__temp_archive_${Date.now()}.tar`;
-        const created = await create(tempPath, paths);
-        if (!created) {
-            return null;
+        const entries: Record<string, string> = {};
+
+        for (const filePath of paths) {
+            const content = await adapter.get(filePath);
+            if (content !== null) {
+                entries[filePath] = content;
+            }
         }
 
-        const content = await adapter.get(tempPath);
-        if (!content) {
-            return null;
-        }
-
-        await adapter.delete(tempPath);
-        return new Blob([content], { type: "application/x-tar" });
+        const archive = new Bun.Archive(entries);
+        return await archive.blob();
     } catch (_error) {
         return null;
     }
@@ -107,9 +129,10 @@ export async function createBlob(paths: string[], adapter: FilesystemDisk): Prom
  */
 export async function list(archivePath: string): Promise<string[]> {
     try {
-        const tempDir = `__temp_extract_${Date.now()}`;
-        await extract(archivePath, tempDir);
-        return [];
+        const tarball = await Bun.file(archivePath).bytes();
+        const archive = new Bun.Archive(tarball);
+        const files = await archive.files();
+        return [...files.keys()];
     } catch (_error) {
         return [];
     }

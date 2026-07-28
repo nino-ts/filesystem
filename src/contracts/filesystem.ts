@@ -5,6 +5,11 @@
  * allowing application code to remain entirely agnostic to where files
  * are physically stored (local disk, cloud, etc.).
  */
+/**
+ * Laravel-style file visibility.
+ */
+export type FileVisibility = "public" | "private";
+
 export interface FilesystemDisk {
     /**
      * Determine if a file exists.
@@ -13,6 +18,14 @@ export interface FilesystemDisk {
      * @returns A promise resolving to true if it exists, false otherwise
      */
     exists(path: string): Promise<boolean>;
+
+    /**
+     * Determine if a file is missing (inverse of {@link exists}).
+     *
+     * @param path - The path to check
+     * @returns A promise resolving to true if it does not exist
+     */
+    missing(path: string): Promise<boolean>;
 
     /**
      * Get the contents of a file.
@@ -131,14 +144,23 @@ export interface FilesystemDisk {
     append(path: string, data: string): Promise<boolean>;
 
     /**
+     * Prepend data to a file.
+     *
+     * @param path - The file path
+     * @param data - The data to prepend
+     * @returns A promise resolving to true on success
+     */
+    prepend(path: string, data: string): Promise<boolean>;
+
+    /**
      * Get the visibility of a file (public/private).
      */
-    getVisibility(path: string): Promise<string | null>;
+    getVisibility(path: string): Promise<FileVisibility | null>;
 
     /**
      * Set the visibility of a file.
      */
-    setVisibility(path: string, visibility: string): Promise<boolean>;
+    setVisibility(path: string, visibility: FileVisibility): Promise<boolean>;
 
     /**
      * Get the MIME type of a file.

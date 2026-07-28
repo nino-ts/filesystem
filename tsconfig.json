@@ -23,10 +23,11 @@
             "@/tests/*": ["./tests/*"]
         },
         "skipLibCheck": true,
-        "types": ["bun", "node"],
+        "types": ["bun"],
         // Best practices
         "strict": true,
         "target": "esnext",
         "verbatimModuleSyntax": true
-    }
+    },
+    "exclude": ["coverage", "dist", "node_modules"]
 }

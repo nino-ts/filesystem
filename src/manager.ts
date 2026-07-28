@@ -1,5 +1,5 @@
 import { LocalAdapter } from "./adapters/local-adapter";
-import type { FilesystemDisk } from "./contracts/filesystem";
+import type { FileVisibility, FilesystemDisk } from "./contracts/filesystem";
 
 export interface FilesystemConfig {
     /**
@@ -93,6 +93,9 @@ export class FilesystemManager implements FilesystemDisk {
     async exists(path: string): Promise<boolean> {
         return this.disk().exists(path);
     }
+    async missing(path: string): Promise<boolean> {
+        return this.disk().missing(path);
+    }
     async get(path: string): Promise<string | null> {
         return this.disk().get(path);
     }
@@ -135,12 +138,15 @@ export class FilesystemManager implements FilesystemDisk {
     async append(path: string, data: string): Promise<boolean> {
         return this.disk().append(path, data);
     }
+    async prepend(path: string, data: string): Promise<boolean> {
+        return this.disk().prepend(path, data);
+    }
 
-    async getVisibility(path: string): Promise<string | null> {
+    async getVisibility(path: string): Promise<FileVisibility | null> {
         return this.disk().getVisibility(path);
     }
 
-    async setVisibility(path: string, visibility: string): Promise<boolean> {
+    async setVisibility(path: string, visibility: FileVisibility): Promise<boolean> {
         return this.disk().setVisibility(path, visibility);
     }
 

@@ -1,6 +1,6 @@
 import { appendFile, copyFile, mkdir, readdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
-import type { FilesystemDisk } from "../contracts/filesystem";
+import type { FileVisibility, FilesystemDisk } from "../contracts/filesystem";
 
 export interface LocalAdapterConfig {
     root: string;
@@ -60,6 +60,16 @@ export class LocalAdapter implements FilesystemDisk {
     }
 
     /**
+     * Determine if a file is missing.
+     *
+     * @param targetPath - The path to check
+     * @returns True if the file does not exist
+     */
+    async missing(targetPath: string): Promise<boolean> {
+        return !(await this.exists(targetPath));
+    }
+
+    /**
      * Get the contents of a file.
      *
      * @param targetPath - The path to the file
@@ -104,6 +114,22 @@ export class LocalAdapter implements FilesystemDisk {
             await this.ensureDirectory(fullPath);
             await appendFile(fullPath, data);
             return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Prepend data to a file.
+     *
+     * @param targetPath - The path to the file
+     * @param data - The data to prepend
+     * @returns True on success, false on failure
+     */
+    async prepend(targetPath: string, data: string): Promise<boolean> {
+        try {
+            const existing = (await this.get(targetPath)) ?? "";
+            return await this.put(targetPath, data + existing);
         } catch {
             return false;
         }
@@ -201,7 +227,7 @@ export class LocalAdapter implements FilesystemDisk {
         }
     }
 
-    async getVisibility(targetPath: string): Promise<string | null> {
+    async getVisibility(targetPath: string): Promise<FileVisibility | null> {
         const file = Bun.file(this.applyPathPrefix(targetPath));
         if (!(await file.exists())) {
             return null;
@@ -209,7 +235,7 @@ export class LocalAdapter implements FilesystemDisk {
         return "private";
     }
 
-    async setVisibility(_targetPath: string, _visibility: string): Promise<boolean> {
+    async setVisibility(_targetPath: string, _visibility: FileVisibility): Promise<boolean> {
         // Local filesystem: visibility is a no-op (permissions may be managed externally)
         return true;
     }

@@ -1,6 +1,11 @@
 import type { FilesystemDisk } from "../contracts/filesystem";
 
 /**
+ * Bun gzip compression level (zlib / libdeflate).
+ */
+export type GzipLevel = -1 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
+/**
  * Options for CompressedAdapter.
  */
 export interface CompressedAdapterOptions {
@@ -17,10 +22,10 @@ export interface CompressedAdapterOptions {
     minSize?: number;
 
     /**
-     * Compression level (1-9).
+     * Compression level (1-9 zlib; up to 12 for libdeflate).
      * @default 6
      */
-    level?: number;
+    level?: GzipLevel;
 }
 
 /**
@@ -45,7 +50,7 @@ export class CompressedAdapter implements FilesystemDisk {
     private adapter: FilesystemDisk;
     private extensions?: string[];
     private minSize: number;
-    private level: number;
+    private level: GzipLevel;
 
     constructor(adapter: FilesystemDisk, options: CompressedAdapterOptions = {}) {
         this.adapter = adapter;
@@ -101,7 +106,7 @@ export class CompressedAdapter implements FilesystemDisk {
         const data = await this.adapter.get(compressedPath);
         if (data) {
             try {
-                const decompressed = await Bun.gunzip(data);
+                const decompressed = Bun.gunzipSync(data);
                 return new TextDecoder().decode(decompressed);
             } catch {
                 // If decompression fails, return as-is
@@ -134,7 +139,7 @@ export class CompressedAdapter implements FilesystemDisk {
                 }
 
                 // Compress and write
-                const compressed = await Bun.gzip(data, { level: this.level });
+                const compressed = Bun.gzipSync(new Uint8Array(data), { level: this.level });
                 return this.adapter.put(compressedPath, compressed);
             } catch (_error) {
                 return false;
