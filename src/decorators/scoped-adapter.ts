@@ -56,6 +56,9 @@ export class ScopedAdapter implements FilesystemDisk {
      * Write the contents of a file (scoped).
      */
     async put(path: string, contents: string | Blob | ArrayBuffer | Uint8Array): Promise<boolean> {
+        if (this.createScope) {
+            await this.adapter.makeDirectory(this.scope);
+        }
         return this.adapter.put(this.applyScope(path), contents);
     }
 

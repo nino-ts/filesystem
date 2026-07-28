@@ -127,12 +127,13 @@ export class WatchedAdapter implements FilesystemDisk {
      */
     private createWatcher(path: string): void {
         try {
+            let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
             const watcher = watch(path, { recursive: this.recursive }, (event, filename) => {
                 if (!filename) {
                     return;
                 }
 
-                // Debounce
                 const callbacks = this.callbacks.get(path);
                 if (!callbacks) {
                     return;
@@ -140,12 +141,17 @@ export class WatchedAdapter implements FilesystemDisk {
 
                 const eventType = event === "change" ? "change" : "rename";
 
-                // Call all callbacks
-                for (const callback of callbacks) {
-                    try {
-                        callback(eventType, filename);
-                    } catch (_error) {}
+                if (debounceTimer !== null) {
+                    clearTimeout(debounceTimer);
                 }
+
+                debounceTimer = setTimeout(() => {
+                    for (const callback of callbacks) {
+                        try {
+                            callback(eventType, filename);
+                        } catch (_error) {}
+                    }
+                }, this.debounce);
             });
 
             this.watchers.set(path, watcher);

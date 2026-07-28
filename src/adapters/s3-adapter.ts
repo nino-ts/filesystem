@@ -1,6 +1,19 @@
 import type { FilesystemDisk } from "../contracts/filesystem";
 
 /**
+ * Bun S3 ACL values accepted by {@link Bun.S3Client} / presign.
+ */
+export type S3Acl =
+    | "private"
+    | "public-read"
+    | "public-read-write"
+    | "authenticated-read"
+    | "aws-exec-read"
+    | "bucket-owner-read"
+    | "bucket-owner-full-control"
+    | "log-delivery-write";
+
+/**
  * Configuration for S3Adapter.
  */
 export interface S3AdapterConfig {
@@ -37,7 +50,7 @@ export interface S3AdapterConfig {
     /**
      * Default ACL for uploaded files (optional).
      */
-    acl?: "public-read" | "private" | "public-read-write" | "authenticated-read";
+    acl?: S3Acl;
 }
 
 /**
@@ -62,14 +75,20 @@ export interface S3AdapterConfig {
 export class S3Adapter implements FilesystemDisk {
     private client: import("bun").S3Client;
     private root: string;
-    private defaultAcl?: "public-read" | "private" | "public-read-write" | "authenticated-read";
+    private bucket: string;
+    private endpoint?: string;
+    private region: string;
+    private defaultAcl?: S3Acl;
 
     constructor(config: S3AdapterConfig) {
+        this.bucket = config.bucket;
+        this.endpoint = config.endpoint;
+        this.region = config.region ?? "us-east-1";
         this.client = new Bun.S3Client({
             accessKeyId: config.accessKeyId,
             bucket: config.bucket,
             endpoint: config.endpoint,
-            region: config.region,
+            region: this.region,
             secretAccessKey: config.secretAccessKey,
         });
         this.root = config.root ? this.normalizePath(config.root) : "";
@@ -445,8 +464,8 @@ export class S3Adapter implements FilesystemDisk {
     async url(path: string): Promise<string> {
         const key = this.resolvePath(path);
         // Return S3 URL format
-        const endpoint = this.client.endpoint || `https://s3.${this.client.region || "us-east-1"}.amazonaws.com`;
-        return `${endpoint}/${this.client.bucket}/${key}`;
+        const endpoint = this.endpoint || `https://s3.${this.region}.amazonaws.com`;
+        return `${endpoint}/${this.bucket}/${key}`;
     }
 
     /**
@@ -479,7 +498,7 @@ export class S3Adapter implements FilesystemDisk {
         options?: {
             contentType?: string;
             contentLength?: number;
-            acl?: string;
+            acl?: S3Acl;
         },
     ): Promise<{
         url: string;
@@ -491,7 +510,7 @@ export class S3Adapter implements FilesystemDisk {
 
         // Generate presigned URL for PUT upload
         const url = file.presign({
-            acl: options?.acl || this.defaultAcl || "public-read",
+            acl: options?.acl ?? this.defaultAcl ?? "public-read",
             expiresIn,
             method: "PUT",
             type: options?.contentType,
@@ -605,7 +624,7 @@ export class S3Adapter implements FilesystemDisk {
             const result = await this.client.list({ prefix });
             const results: string[] = [];
 
-            for (const obj of result.objects || []) {
+            for (const obj of result.contents ?? []) {
                 const key = obj.key;
                 if (!key) {
                     continue;
@@ -630,7 +649,7 @@ export class S3Adapter implements FilesystemDisk {
                     const parts = relativeKey.split("/");
                     if (parts.length > 1) {
                         const dirName = parts[0];
-                        if (!results.includes(dirName)) {
+                        if (dirName !== undefined && !results.includes(dirName)) {
                             results.push(dirName);
                         }
                     }
