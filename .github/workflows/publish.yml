@@ -38,21 +38,3 @@ jobs:
             npm publish --access public --provenance
           fi
 
-  publish-jsr:
-    runs-on: ubuntu-latest
-    # Independent of npm — JSR must run even when the npm version already exists.
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "latest"
-
-      # Needed when package has npm deps (e.g. config → yaml) for JSR type graph.
-      - name: Install dependencies
-        run: bun install
-
-      - name: Publish to JSR
-        run: bunx --bun jsr publish --allow-slow-types --allow-dirty
