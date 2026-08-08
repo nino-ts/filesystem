@@ -21,7 +21,18 @@ biome.json
 tsconfig.tsbuildinfo
 node_modules/
 .DS_Store
+
+# Hub orchestration / ops — never npm-publish (and should not live in public package git)
+AGENTS.md
+PROJECT_BRIEF.md
+TRUSTED_PUBLISHER.md
+**/TRUSTED_PUBLISHER.md
 docs/
+docs/**
+docs/ops/
+
+# Prefer consumer-facing markdown only
 *.md
 !README.md
 !LICENSE
+!CHANGELOG.md
