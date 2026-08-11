@@ -1,0 +1,76 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
+    "root": true,
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "ignoreUnknown": true,
+        "includes": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.json",
+            "!**/node_modules",
+            "!**/dist",
+            "!**/build",
+            "!**/docs",
+            "!**/.deps"
+        ]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 120,
+        "lineEnding": "lf"
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "preset": "recommended",
+            "source": {
+                "organizeImports": "off"
+            }
+        }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "preset": "recommended",
+            "complexity": {
+                "noForEach": "error",
+                "useArrowFunction": "error",
+                "noUselessUndefinedInitialization": "error",
+                "noUselessConstructor": "error",
+                "useOptionalChain": "warn"
+            },
+            "correctness": {
+                "noUnusedVariables": "error",
+                "noUnusedImports": "error",
+                "noUnusedFunctionParameters": "warn"
+            },
+            "style": {
+                "noNonNullAssertion": "warn",
+                "useConst": "error",
+                "useBlockStatements": "error",
+                "noParameterAssign": "error"
+            },
+            "suspicious": {
+                "noExplicitAny": "warn",
+                "noConsole": "warn"
+            }
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "trailingCommas": "all",
+            "arrowParentheses": "always",
+            "bracketSpacing": true,
+            "bracketSameLine": false,
+            "semicolons": "always",
+            "quoteStyle": "double"
+        }
+    }
+}
