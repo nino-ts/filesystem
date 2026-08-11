@@ -1,0 +1,6 @@
+# Biome lineEnding=lf — keep JSON/TS LF on Windows (core.autocrlf)
+* text=auto eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
